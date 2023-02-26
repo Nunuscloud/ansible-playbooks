@@ -1,0 +1,33 @@
+- name: Install oh-my-zsh
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Install required packages
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - zsh
+        - git
+
+    - name: Clone oh-my-zsh repository
+      git:
+        repo: https://github.com/ohmyzsh/ohmyzsh.git
+        dest: /home/{{ ansible_user }}/ohmyzsh
+        clone: yes
+        force: yes
+      become_user: "{{ ansible_user }}"
+      register: ohmyzsh_clone_result
+
+    - name: Set zsh as default shell
+      shell: chsh -s $(which zsh) "{{ ansible_user }}"
+      become_user: "{{ ansible_user }}"
+      when: ohmyzsh_clone_result.changed
+
+    - name: Copy .zshrc
+      template:
+        src: templates/zshrc.j2
+        dest: /home/{{ ansible_user }}/.zshrc
+      become_user: "{{ ansible_user }}"
+      when: ohmyzsh_clone_result.changed
