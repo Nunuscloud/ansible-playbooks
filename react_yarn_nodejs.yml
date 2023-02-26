@@ -1,0 +1,34 @@
+- name: Install Node.js, Yarn, and React
+  hosts: all
+  become: true
+  tasks:
+    - name: Add Node.js PPA
+      apt_repository:
+        repo: deb https://deb.nodesource.com/node_16.x focal main
+        state: present
+        filename: nodesource.list
+
+    - name: Add Yarn repository
+      apt_repository:
+        repo: deb https://dl.yarnpkg.com/debian/ stable main
+        state: present
+        filename: yarn.list
+        key:
+          id: 4B2261D9
+          url: https://dl.yarnpkg.com/debian/pubkey.gpg
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Node.js and Yarn
+      apt:
+        name:
+          - nodejs
+          - yarn
+        state: present
+
+    - name: Install React
+      npm:
+        name: create-react-app
+        global: yes
