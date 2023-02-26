@@ -1,0 +1,26 @@
+- name: Install Terraform
+  hosts: all
+  become: true
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - unzip
+          - wget
+
+    - name: Download Terraform
+      get_url:
+        url: "https://releases.hashicorp.com/terraform/1.0.8/terraform_1.0.8_linux_amd64.zip"
+        dest: "/tmp/terraform.zip"
+
+    - name: Unzip Terraform
+      unarchive:
+        src: "/tmp/terraform.zip"
+        dest: "/usr/local/bin/"
+        remote_src: true
+        creates: "/usr/local/bin/terraform"
+
+    - name: Set Terraform permissions
+      file:
+        path: "/usr/local/bin/terraform"
+        mode: "u+x"
