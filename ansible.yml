@@ -1,0 +1,30 @@
+- name: Install Ansible
+  hosts: all
+  become: true
+  tasks:
+    - name: Install Python and pip
+      apt:
+        name:
+          - python3
+          - python3-pip
+        update_cache: yes
+
+    - name: Add apt key for Ansible
+      apt_key:
+        url: https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xF1656F24C74CD1D8
+        state: present
+
+    - name: Add apt repository for Ansible
+      apt_repository:
+        repo: deb http://ppa.launchpad.net/ansible/ansible/ubuntu focal main
+        state: present
+        filename: ansible
+
+    - name: Update apt package cache
+      apt:
+        update_cache: yes
+
+    - name: Install Ansible
+      apt:
+        name: ansible
+        state: present
