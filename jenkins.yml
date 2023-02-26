@@ -1,0 +1,33 @@
+---
+- name: Install Jenkins
+  hosts: localhost
+  become: true
+
+  tasks:
+    - name: download apt key
+      ansible.builtin.apt_key:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io.key
+        state: present
+    - name: Add Jenkins repo to sources.list
+      ansible.builtin.apt_repository:
+        repo: deb https://pkg.jenkins.io/debian-stable binary/
+        state: present
+        filename: jenkins
+    - name: Install Java
+      apt:
+        name: openjdk-11-jdk
+        state: present
+        update_cache: yes
+    - name: Update apt cache and install jenkins
+      apt:
+        name: jenkins
+        state: latest
+        update_cache: yes
+    - name: daemon-reload to pick up config changes
+      ansible.builtin.systemd:
+        daemon_reload: yes
+    - name: Ensure Jenkins is started and enable
+      ansible.builtin.systemd:
+        name: jenkins
+        enabled: yes
+        state: started
