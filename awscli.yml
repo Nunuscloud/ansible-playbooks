@@ -1,0 +1,24 @@
+---
+- name: Install AWS CLI
+  hosts: all
+  become: true
+  vars:
+    aws_cli_version: "2.4.19"
+    aws_cli_sha256sum: "ccf7d4341f04cde0b74033d2e2a7d5ce71bc1f7e59c5f5a5a5a5a5a5a5a5a5a5"
+  tasks:
+    - name: Download AWS CLI
+      get_url:
+        url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-{{ aws_cli_version }}.zip"
+        dest: "/tmp/awscliv2.zip"
+        checksum: "sha256:{{ aws_cli_sha256sum }}"
+      register: download_aws_cli
+
+    - name: Install AWS CLI
+      command: "/usr/bin/unzip -qq /tmp/awscliv2.zip -d /tmp"
+      when: download_aws_cli.changed
+
+    - name: Run AWS CLI installer
+      command: "/tmp/aws/install --update --bin-dir /usr/bin --install-dir /usr/local/aws-cli"
+      args:
+        creates: "/usr/local/aws-cli/aws"
+      when: download_aws_cli.changed
