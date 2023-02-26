@@ -1,0 +1,77 @@
+---
+- name: Install and configure zsh and oh-my-zsh
+  hosts: all
+  become: true
+  vars:
+    zsh_user: ubuntu # Change this to the appropriate user
+  tasks:
+    # Install zsh
+    - name: Install zsh
+      apt:
+        name: zsh
+        state: latest
+      become: true
+
+    # Set zsh as the default shell for the user
+    - name: Change shell to zsh
+      user:
+        name: "{{ zsh_user }}"
+        shell: /usr/bin/zsh
+
+    # Install oh-my-zsh
+    - name: Install oh-my-zsh
+      git:
+        repo: https://github.com/ohmyzsh/ohmyzsh.git
+        dest: /home/{{ zsh_user }}/.oh-my-zsh
+        clone: yes
+        depth: 1
+      become: true
+      become_user: "{{ zsh_user }}"
+
+    # Apply agnoster theme
+    - name: Apply agnoster theme
+      lineinfile:
+        path: /home/{{ zsh_user }}/.zshrc
+        regexp: '^ZSH_THEME='
+        line: 'ZSH_THEME="agnoster"'
+      become: true
+      become_user: "{{ zsh_user }}"
+
+    # Install autojump plugin
+    - name: Install autojump plugin
+      git:
+        repo: https://github.com/wting/autojump.git
+        dest: /home/{{ zsh_user }}/.oh-my-zsh/custom/plugins/autojump
+        clone: yes
+        depth: 1
+      become: true
+      become_user: "{{ zsh_user }}"
+
+    # Install zsh-autosuggestions plugin
+    - name: Install zsh-autosuggestions plugin
+      git:
+        repo: https://github.com/zsh-users/zsh-autosuggestions.git
+        dest: /home/{{ zsh_user }}/.oh-my-zsh/custom/plugins/zsh-autosuggestions
+        clone: yes
+        depth: 1
+      become: true
+      become_user: "{{ zsh_user }}"
+
+    # Install zsh-syntax-highlighting plugin
+    - name: Install zsh-syntax-highlighting plugin
+      git:
+        repo: https://github.com/zsh-users/zsh-syntax-highlighting.git
+        dest: /home/{{ zsh_user }}/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+        clone: yes
+        depth: 1
+      become: true
+      become_user: "{{ zsh_user }}"
+
+    # Update .zshrc with plugins
+    - name: Update .zshrc with plugins
+      lineinfile:
+        path: /home/{{ zsh_user }}/.zshrc
+        regexp: '^plugins='
+        line: 'plugins=(git autojump zsh-autosuggestions zsh-syntax-highlighting)'
+      become: true
+      become_user: "{{ zsh_user }}"
