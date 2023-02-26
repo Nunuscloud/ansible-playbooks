@@ -1,0 +1,66 @@
+- name: Install Kubernetes
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Install Docker
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - gnupg
+        - lsb-release
+      when: ansible_os_family == 'Debian'
+
+    - name: Add Kubernetes apt-key
+      apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+      when: ansible_os_family == 'Debian'
+
+    - name: Add Kubernetes apt repository
+      apt_repository:
+        repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+        state: present
+        filename: kubernetes.list
+      when: ansible_os_family == 'Debian'
+
+    - name: Install Kubernetes components
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - kubelet
+        - kubeadm
+        - kubectl
+      when: ansible_os_family == 'Debian'
+
+    - name: Initialize Kubernetes cluster
+      command: kubeadm init
+      args:
+        creates: /etc/kubernetes/admin.conf
+      when: inventory_hostname == groups['k8s_master'][0]
+
+    - name: Copy kubeconfig file to user directory
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /home/{{ ansible_user }}/admin.conf
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: 0600
+      when: inventory_hostname == groups['k8s_master'][0]
+
+    - name: Copy kubeconfig file to /etc/kubernetes
+      copy:
+        src: /home/{{ ansible_user }}/admin.conf
+        dest: /etc/kubernetes/admin.conf
+        owner: root
+        group: root
+        mode: 0644
+      when: inventory_hostname == groups['k8s_master'][0]
+
+    - name: Install network add-on
+      command: kubectl apply -f https://docs.projectcalico.org/v3.18/manifests/calico.yaml
+      when: inventory_hostname == groups['k8s_master'][0]
