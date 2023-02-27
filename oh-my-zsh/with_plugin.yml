@@ -1,9 +1,10 @@
 ---
-- name: Install and configure zsh and oh-my-zsh
-  hosts: all
+- name: Install oh_my_zsh
+  hosts: main
   become: true
   vars:
     zsh_user: ubuntu # Change this to the appropriate user
+    aws_hosts: ubuntu
   tasks:
     # Install zsh
     - name: Install zsh
@@ -18,8 +19,23 @@
         name: "{{ zsh_user }}"
         shell: /usr/bin/zsh
 
-    # Install oh-my-zsh
-    - name: Install oh-my-zsh
+    # Install Python3
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+    - name: Install packages
+      apt:
+        name:
+          - python3
+          - python3-pip
+          - git
+        state: present
+      become: true
+      vars:
+        ansible_python_interpreter: /usr/bin/python3
+
+    # Download zsh startup files from git
+    - name: Download zsh startup files
       git:
         repo: https://github.com/ohmyzsh/ohmyzsh.git
         dest: /home/{{ zsh_user }}/.oh-my-zsh
@@ -28,26 +44,42 @@
       become: true
       become_user: "{{ zsh_user }}"
 
+    # Copy zshrc file to user home directory
+    - name: Copy zshrc file
+      copy:
+        src: /home/{{ zsh_user }}/.oh-my-zsh/templates/zshrc.zsh-template
+        dest: /home/{{ zsh_user }}/.zshrc
+        owner: "{{ zsh_user }}"
+        group: "{{ zsh_user }}"
+        mode: 0644
+      become: true
+      become_user: "{{ zsh_user }}"
+
     # Apply agnoster theme
     - name: Apply agnoster theme
       lineinfile:
         path: /home/{{ zsh_user }}/.zshrc
-        regexp: '^ZSH_THEME='
+        regexp: "^ZSH_THEME="
         line: 'ZSH_THEME="agnoster"'
       become: true
       become_user: "{{ zsh_user }}"
 
     # Install autojump plugin
-    - name: Install autojump plugin
-      git:
-        repo: https://github.com/wting/autojump.git
-        dest: /home/{{ zsh_user }}/.oh-my-zsh/custom/plugins/autojump
-        clone: yes
-        depth: 1
-      become: true
-      become_user: "{{ zsh_user }}"
+    - name: Install required packages
+      apt:
+        update_cache: yes
+        name: "{{ packages }}"
+      vars:
+        packages:
+          - autojump
 
-    # Install zsh-autosuggestions plugin
+    - name: Change autojump to use Python 3
+      shell: |
+        cd ~/.autojump/bin/
+        sed -i '1s/.*/#!\\/usr\\/bin\\/env\\ python3/' autojump
+        find . -type f -exec sed -i 's/python/python3/g' {} +
+
+      # Install zsh-autosuggestions plugin
     - name: Install zsh-autosuggestions plugin
       git:
         repo: https://github.com/zsh-users/zsh-autosuggestions.git
@@ -71,7 +103,7 @@
     - name: Update .zshrc with plugins
       lineinfile:
         path: /home/{{ zsh_user }}/.zshrc
-        regexp: '^plugins='
-        line: 'plugins=(git autojump zsh-autosuggestions zsh-syntax-highlighting)'
+        regexp: "^plugins="
+        line: "plugins=(git autojump zsh-autosuggestions zsh-syntax-highlighting)"
       become: true
       become_user: "{{ zsh_user }}"
