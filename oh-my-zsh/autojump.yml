@@ -1,0 +1,22 @@
+---
+- name: Install and configure autojump
+  hosts: all
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Install required packages
+      apt:
+        update_cache: yes
+        name: "{{ packages }}"
+      vars:
+        packages:
+          - python3-pip
+          - git
+          - autojump
+
+    - name: Change autojump to use Python 3
+      shell: |
+        cd ~/.autojump/bin/
+        sed -i '1s/.*/#!\\/usr\\/bin\\/env\\ python3/' autojump
+        find . -type f -exec sed -i 's/python/python3/g' {} +
