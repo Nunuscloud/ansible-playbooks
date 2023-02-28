@@ -1,0 +1,41 @@
+---
+- name: Install Go and set environment variables
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Update apt package cache
+      apt:
+        update_cache: yes
+
+    - name: Install wget
+      apt:
+        name: wget
+        state: present
+
+    - name: Download Go
+      get_url:
+        url: https://golang.org/dl/go1.17.2.linux-amd64.tar.gz
+        dest: /tmp/go1.17.2.linux-amd64.tar.gz
+
+    - name: Extract Go
+      unarchive:
+        src: /tmp/go1.17.2.linux-amd64.tar.gz
+        dest: /usr/local
+        remote_src: yes
+        copy: no
+
+    - name: Set Go environment variables
+      lineinfile:
+        path: "{{ item }}rc"
+        line: "{{ item_line }}"
+        state: present
+        backup: yes
+      with_items:
+        - bash
+        - zsh
+      vars:
+        item_line: |
+          export PATH=$PATH:/usr/local/go/bin
+          export GOPATH=$HOME/go
+          export PATH=$PATH:$GOPATH/bin
